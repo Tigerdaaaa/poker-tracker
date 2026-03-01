@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#0d0d0d">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Poker Tracker">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<title>Poker Tracker</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=IBM+Plex+Mono:wght@300;400;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0d0d0d;
+    --surface: #161616;
+    --border: #2a2a2a;
+    --green: #00e676;
+    --red: #ff1744;
+    --gold: #ffd600;
+    --text: #e8e8e8;
+    --muted: #555;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'IBM Plex Mono', monospace;
+    min-height: 100vh;
+    min-height: -webkit-fill-available;
+    overscroll-behavior: none;
+  }
+
+  .header {
+    padding: 3rem 1.25rem 1rem;
+    background: var(--bg);
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    border-bottom: 1px solid var(--border);
+  }
+
+  h1 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 2.8rem;
+    letter-spacing: 0.06em;
+    color: var(--gold);
+    line-height: 1;
+    text-shadow: 0 0 30px rgba(255,214,0,0.2);
+  }
+
+  .subtitle {
+    font-size: 0.6rem;
+    color: var(--muted);
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    margin-top: 0.2rem;
+  }
+
+  /* Stats */
+  .stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1px;
+    background: var(--border);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .stat {
+    background: var(--surface);
+    padding: 1rem 0.75rem;
+    text-align: center;
+  }
+
+  .stat-label {
+    font-size: 0.55rem;
+    color: var(--muted);
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    margin-bottom: 0.3rem;
+  }
+
+  .stat-value {
+    font-size: 1.1rem;
+    font-weight: 600;
+  }
+
+  .positive { color: var(--green); }
+  .negative { color: var(--red); }
+  .neutral { color: var(--text); }
+
+  /* Add session form */
+  .add-section {
+    padding: 1.25rem;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg);
+  }
+
+  .section-label {
+    font-size: 0.6rem;
+    color: var(--muted);
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    margin-bottom: 0.75rem;
+  }
+
+  .form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.6rem;
+    margin-bottom: 0.6rem;
+  }
+
+  .field label {
+    display: block;
+    font-size: 0.55rem;
+    color: var(--muted);
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    margin-bottom: 0.35rem;
+  }
+
+  input[type="date"],
+  input[type="number"] {
+    width: 100%;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.9rem;
+    padding: 0.7rem 0.85rem;
+    outline: none;
+    border-radius: 2px;
+    -webkit-appearance: none;
+    appearance: none;
+  }
+
+  input:focus { border-color: var(--gold); }
+  input[type="number"]::-webkit-inner-spin-button { display: none; }
+  input[type="date"]::-webkit-calendar-picker-indicator { filter: invert(0.5); }
+
+  .amount-wrap { position: relative; }
+  .amount-wrap span {
+    position: absolute; left: 0.85rem; top: 50%;
+    transform: translateY(-50%); color: var(--muted); pointer-events: none;
+  }
+  .amount-wrap input { padding-left: 1.5rem; }
+
+  .type-toggle { display: flex; gap: 0.6rem; margin-bottom: 0.6rem; }
+
+  .type-btn {
+    flex: 1;
+    padding: 0.7rem;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--muted);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.7rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    cursor: pointer;
+    border-radius: 2px;
+    transition: all 0.15s;
+  }
+
+  .type-btn.active-win { background: rgba(0,230,118,0.12); color: var(--green); border-color: var(--green); }
+  .type-btn.active-loss { background: rgba(255,23,68,0.12); color: var(--red); border-color: var(--red); }
+
+  .add-btn {
+    width: 100%;
+    background: var(--gold);
+    color: #000;
+    border: none;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.2rem;
+    letter-spacing: 0.1em;
+    padding: 0.85rem;
+    cursor: pointer;
+    border-radius: 2px;
+    transition: opacity 0.15s, transform 0.1s;
+  }
+
+  .add-btn:active { transform: scale(0.98); opacity: 0.85; }
+
+  /* Sessions */
+  .sessions-section { padding: 1.25rem; }
+
+  .sessions-header-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.75rem;
+  }
+
+  .clear-btn {
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.55rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 0.35rem 0.6rem;
+    cursor: pointer;
+    border-radius: 2px;
+  }
+
+  .clear-btn:active { border-color: var(--red); color: var(--red); }
+
+  .empty-state {
+    text-align: center;
+    color: var(--muted);
+    font-size: 0.75rem;
+    padding: 3rem 1rem;
+    letter-spacing: 0.05em;
+    line-height: 1.8;
+  }
+
+  .session-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    padding: 0.85rem 1rem;
+    margin-bottom: 0.5rem;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 0.25rem;
+    align-items: center;
+    animation: slideIn 0.2s ease;
+    position: relative;
+  }
+
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateY(-6px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .card-left { display: flex; flex-direction: column; gap: 0.2rem; }
+
+  .card-num {
+    font-size: 0.55rem;
+    color: var(--muted);
+    letter-spacing: 0.1em;
+  }
+
+  .card-date { font-size: 0.8rem; color: var(--text); }
+
+  .card-right { display: flex; flex-direction: column; align-items: flex-end; gap: 0.2rem; }
+
+  .card-amount { font-size: 1.1rem; font-weight: 600; }
+  .card-running { font-size: 0.7rem; }
+
+  .win { color: var(--green); }
+  .loss { color: var(--red); }
+
+  .delete-btn {
+    position: absolute;
+    top: 0.5rem; right: 0.5rem;
+    background: none;
+    border: none;
+    color: var(--border);
+    font-size: 0.8rem;
+    cursor: pointer;
+    padding: 0.2rem 0.3rem;
+    line-height: 1;
+  }
+
+  .delete-btn:active { color: var(--red); }
+
+  /* Toast */
+  .toast {
+    position: fixed;
+    bottom: 2rem;
+    left: 50%;
+    transform: translateX(-50%) translateY(100px);
+    background: var(--gold);
+    color: #000;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1rem;
+    letter-spacing: 0.1em;
+    padding: 0.6rem 1.5rem;
+    border-radius: 2px;
+    transition: transform 0.25s ease;
+    pointer-events: none;
+    z-index: 100;
+  }
+
+  .toast.show { transform: translateX(-50%) translateY(0); }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>POKER TRACKER</h1>
+  <p class="subtitle">Session log &amp; bankroll</p>
+</div>
+
+<div class="stats">
+  <div class="stat">
+    <div class="stat-label">Total P/L</div>
+    <div class="stat-value" id="total-pl">$0</div>
+  </div>
+  <div class="stat">
+    <div class="stat-label">Sessions</div>
+    <div class="stat-value neutral" id="session-count">0</div>
+  </div>
+  <div class="stat">
+    <div class="stat-label">Win Rate</div>
+    <div class="stat-value neutral" id="win-rate">—</div>
+  </div>
+</div>
+
+<div class="add-section">
+  <div class="section-label">New Session</div>
+  <div class="form-grid">
+    <div class="field">
+      <label>Date</label>
+      <input type="date" id="date-input">
+    </div>
+    <div class="field">
+      <label>Amount</label>
+      <div class="amount-wrap">
+        <span>$</span>
+        <input type="number" id="amount-input" placeholder="0.00" min="0" step="0.01" inputmode="decimal">
+      </div>
+    </div>
+  </div>
+  <div class="type-toggle">
+    <button class="type-btn" id="btn-win" onclick="setType('win')">✓ WIN</button>
+    <button class="type-btn active-loss" id="btn-loss" onclick="setType('loss')">✗ LOSS</button>
+  </div>
+  <button class="add-btn" onclick="addSession()">+ ADD SESSION</button>
+</div>
+
+<div class="sessions-section">
+  <div class="sessions-header-row">
+    <div class="section-label" style="margin-bottom:0">History</div>
+    <button class="clear-btn" onclick="clearAll()">Clear All</button>
+  </div>
+  <div id="sessions-list"></div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  let sessions = [];
+  let currentType = 'loss';
+
+  try { sessions = JSON.parse(localStorage.getItem('poker-sessions') || '[]'); } catch(e) {}
+
+  document.getElementById('date-input').value = new Date().toISOString().split('T')[0];
+
+  function setType(type) {
+    currentType = type;
+    document.getElementById('btn-win').className = type === 'win' ? 'type-btn active-win' : 'type-btn';
+    document.getElementById('btn-loss').className = type === 'loss' ? 'type-btn active-loss' : 'type-btn';
+  }
+
+  function addSession() {
+    const date = document.getElementById('date-input').value;
+    const amount = parseFloat(document.getElementById('amount-input').value);
+    if (!date || isNaN(amount) || amount <= 0) {
+      showToast('Enter a valid amount!');
+      return;
+    }
+    sessions.unshift({ id: Date.now(), date, amount, type: currentType });
+    save(); render();
+    document.getElementById('amount-input').value = '';
+    showToast(currentType === 'win' ? 'WIN logged 🎉' : 'Loss logged');
+  }
+
+  function deleteSession(id) {
+    sessions = sessions.filter(s => s.id !== id);
+    save(); render();
+  }
+
+  function clearAll() {
+    if (!sessions.length) return;
+    if (confirm('Clear all sessions?')) { sessions = []; save(); render(); }
+  }
+
+  function save() {
+    try { localStorage.setItem('poker-sessions', JSON.stringify(sessions)); } catch(e) {}
+  }
+
+  function fmtDate(d) {
+    const [y, m, day] = d.split('-');
+    return `${m}/${day}/${y.slice(2)}`;
+  }
+
+  function fmtAmt(val, prefix = true) {
+    const abs = Math.abs(val).toLocaleString('en-US', { minimumFractionDigits: 2 });
+    if (!prefix) return abs;
+    return (val >= 0 ? '+$' : '-$') + abs;
+  }
+
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2000);
+  }
+
+  function render() {
+    const totalPL = sessions.reduce((s, x) => s + (x.type === 'win' ? x.amount : -x.amount), 0);
+    const wins = sessions.filter(s => s.type === 'win').length;
+    const winRate = sessions.length ? Math.round((wins / sessions.length) * 100) : null;
+
+    const plEl = document.getElementById('total-pl');
+    plEl.textContent = sessions.length === 0 ? '$0' : (totalPL >= 0 ? '+$' : '-$') + Math.abs(totalPL).toLocaleString('en-US', { minimumFractionDigits: 2 });
+    plEl.className = 'stat-value ' + (totalPL > 0 ? 'positive' : totalPL < 0 ? 'negative' : 'neutral');
+    document.getElementById('session-count').textContent = sessions.length;
+    document.getElementById('win-rate').textContent = winRate !== null ? winRate + '%' : '—';
+
+    const list = document.getElementById('sessions-list');
+    if (!sessions.length) {
+      list.innerHTML = '<div class="empty-state">No sessions yet.<br>Add your first session above.</div>';
+      return;
+    }
+
+    const sorted = [...sessions].reverse();
+    let r = 0;
+    const running = sorted.map(s => { r += s.type === 'win' ? s.amount : -s.amount; return r; }).reverse();
+
+    list.innerHTML = sessions.map((s, i) => {
+      const dispAmt = (s.type === 'win' ? '+$' : '-$') + s.amount.toLocaleString('en-US', { minimumFractionDigits: 2 });
+      const run = running[i];
+      const runDisp = (run >= 0 ? '+$' : '-$') + Math.abs(run).toLocaleString('en-US', { minimumFractionDigits: 2 });
+      return `<div class="session-card">
+        <button class="delete-btn" onclick="deleteSession(${s.id})">✕</button>
+        <div class="card-left">
+          <span class="card-num">SESSION #${sessions.length - i}</span>
+          <span class="card-date">${fmtDate(s.date)}</span>
+        </div>
+        <div class="card-right">
+          <span class="card-amount ${s.type === 'win' ? 'win' : 'loss'}">${dispAmt}</span>
+          <span class="card-running ${run >= 0 ? 'win' : 'loss'}">running: ${runDisp}</span>
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  render();
+
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('sw.js').catch(() => {});
+  }
+</script>
+</body>
+</html>
